@@ -1,25 +1,22 @@
-mesos-docker-tutorial
-=====================
+# A working example to execute elasticio/apprunner using a custom Framework
 
-Tutorial on building a Mesos framework in Java to launch Docker containers on slaves.
+# Stuff to do first
 
-The full tutorial will be available on the CodeFutures web site shortly.
-
-Here are some brief instructions to running this code.
-
-First, install mesos 0.20.1 and Docker 1.0.0 or greater. This code was tested with Docker 1.2.0.
-
-Start the Mesos master and slave:
-
-    nohup mesos-master --ip=127.0.0.1 --work_dir=/tmp >mesos-master.log 2>&1 &
-
-    nohup mesos-slave --master=127.0.0.1:5050 --containerizers=docker,mesos >mesos-slave.log 2>&1 &
-
-Build the framework:
-
-    mvn package
+- Clone [playa-mesos](https://github.com/iznenad/playa-mesos)
+- Spin up the VM with `vagrant up`
+- Build the mesos-docker-tutorial jar with `mvn package`
+- Copy the created jar to `playa-mesos/framework/framework.jar`
+- `vagrant ssh` into playa-mesos VM
 
 Run the framework:
 
-    java -classpath target/cf-tutorial-mesos-docker-1.0-SNAPSHOT-jar-with-dependencies.jar com.codefutures.tutorial.mesos.docker.ExampleFramework 127.0.0.1:5050 fedora/apache 2
+    java -classpath /home/vagrant/framework/framework.jar com.codefutures.tutorial.mesos.docker.ExampleFramework 127.0.1.1:5050 elasticio/apprunner 1 http://elasticio-slugs-stage.s3.amazonaws.com/elastic_nenad/testrepo/slug-849fc4ccd9905f28c59e83dc9ff283bf1744084e.tar.gz
 
+# Notes
+
+The execution command will download a dumb slug with an example component containing a setInterval and printing the response from google.com.
+
+The `node main.js` command is hardcoded [here](https://github.com/iznenad/mesos-docker-tutorial/blob/master/src/main/java/com/codefutures/tutorial/mesos/docker/ExampleScheduler.java#L118).
+
+You can see the slave logs [here](http://10.141.141.10:5050/#/slaves). Just click on one of the slaves and find the big LOG link on the left side of the page.
+The master logs are on the left side [here](http://10.141.141.10:5050/#/)
