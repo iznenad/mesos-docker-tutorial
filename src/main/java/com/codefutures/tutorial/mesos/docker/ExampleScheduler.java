@@ -18,10 +18,14 @@
 package com.codefutures.tutorial.mesos.docker;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.Protos.Environment;
+import org.apache.mesos.Protos.Environment.Variable;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.UnknownFieldSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +40,8 @@ public class ExampleScheduler implements Scheduler {
   /** Docker image name e..g. "fedora/apache". */
   private final String imageName;
 
+  private final String slugName;
+  
   /** Number of instances to run. */
   private final int desiredInstances;
 
@@ -49,9 +55,10 @@ public class ExampleScheduler implements Scheduler {
   private final AtomicInteger taskIDGenerator = new AtomicInteger();
 
   /** Constructor. */
-  public ExampleScheduler(String imageName, int desiredInstances) {
+  public ExampleScheduler(String imageName, String slugName, int desiredInstances) {
     this.imageName = imageName;
     this.desiredInstances = desiredInstances;
+    this.slugName = slugName;
   }
 
   @Override
@@ -83,14 +90,17 @@ public class ExampleScheduler implements Scheduler {
 
         // docker image info
         Protos.ContainerInfo.DockerInfo.Builder dockerInfoBuilder = Protos.ContainerInfo.DockerInfo.newBuilder();
-        dockerInfoBuilder.setImage(imageName);
-        dockerInfoBuilder.setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE);
-
+        dockerInfoBuilder.setImage(imageName)
+        .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE);
+        
+       
         // container info
         Protos.ContainerInfo.Builder containerInfoBuilder = Protos.ContainerInfo.newBuilder();
-        containerInfoBuilder.setType(Protos.ContainerInfo.Type.DOCKER);
-        containerInfoBuilder.setDocker(dockerInfoBuilder.build());
-
+        containerInfoBuilder.setType(Protos.ContainerInfo.Type.DOCKER)
+        .setDocker(dockerInfoBuilder.build());
+        
+        Variable variable = Variable.newBuilder().setName("SLUG_URL").setValue(slugName).build();
+        Environment env = Environment.newBuilder().addVariables(variable).build();
         // create task to run
         Protos.TaskInfo task = Protos.TaskInfo.newBuilder()
             .setName("task " + taskId.getValue())
@@ -105,7 +115,7 @@ public class ExampleScheduler implements Scheduler {
                 .setType(Protos.Value.Type.SCALAR)
                 .setScalar(Protos.Value.Scalar.newBuilder().setValue(128)))
             .setContainer(containerInfoBuilder)
-            .setCommand(Protos.CommandInfo.newBuilder().setShell(false))
+            .setCommand(Protos.CommandInfo.newBuilder().setEnvironment(env).setShell(false).addArguments("node main.js"))
             .build();
 
         tasks.add(task);
@@ -124,9 +134,11 @@ public class ExampleScheduler implements Scheduler {
   public void statusUpdate(SchedulerDriver driver, Protos.TaskStatus taskStatus) {
 
     final String taskId = taskStatus.getTaskId().getValue();
-
-    logger.info("statusUpdate() task {} is in state {}",
-        taskId, taskStatus.getState());
+    
+    logger.info("{}", taskStatus.findInitializationErrors().size());
+    
+    logger.info("statusUpdate() task {} is in state {}, init failiure: {}",
+        taskId, taskStatus.getState(), taskStatus.getInitializationErrorString());
 
     switch (taskStatus.getState()) {
       case TASK_RUNNING:

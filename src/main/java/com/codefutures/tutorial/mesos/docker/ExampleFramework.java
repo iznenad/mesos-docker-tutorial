@@ -33,7 +33,7 @@ public class ExampleFramework {
   /** Show command-line usage. */
   private static void usage() {
     String name = ExampleFramework.class.getName();
-    System.err.println("Usage: " + name + " master-ip-and-port docker-image-name number-of-instances");
+    System.err.println("Usage: " + name + " master-ip-and-port docker-image-name number-of-instances slug-name");
   }
 
   /**
@@ -44,7 +44,7 @@ public class ExampleFramework {
   public static void main(String[] args) throws Exception {
 
     // check command-line args
-    if (args.length != 3) {
+    if (args.length != 4) {
       usage();
       System.exit(1);
     }
@@ -58,7 +58,7 @@ public class ExampleFramework {
     final int frameworkFailoverTimeout = 0;
 
     FrameworkInfo.Builder frameworkBuilder = FrameworkInfo.newBuilder()
-        .setName("CodeFuturesExampleFramework")
+        .setName("ElasticioFramework")
         .setUser("") // Have Mesos fill in the current user.
         .setFailoverTimeout(frameworkFailoverTimeout); // timeout in seconds
 
@@ -74,6 +74,7 @@ public class ExampleFramework {
     // create the scheduler
     final Scheduler scheduler = new ExampleScheduler(
         imageName,
+        args[3],
         totalTasks
     );
 
