@@ -14,9 +14,9 @@ Run the framework:
 
 # Notes
 
-To restart the slave: `sudo service mesos-slave restart`
-To restart the master: `sudo service mesos-slave restart`
-(Both while inside the playa-mesos VM of course)
+
+- To restart the slave: `sudo service mesos-slave restart` while inside the playa-mesos VM of course
+- To restart the master: `sudo service mesos-slave restart` while inside the playa-mesos VM of course
 
 The execution command will download a dumb slug with an example component containing a setInterval and printing the response from google.com.
 
